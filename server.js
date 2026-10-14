@@ -6,18 +6,23 @@ app.use(express.json());
 
 // LISTAR todas as tarefas (com filtro opcional por status)
 app.get('/tarefas', async (req, res) => {
-
     try {
-        const { concluida } = req.query;
-        let query = 'SELECT * FROM tarefas';
-        let params = [];
+        const { concluida, prioridade } = req.query;
+
+        let query = 'SELECT * FROM tarefas WHERE 1=1';
+        const params = [];
 
         if (concluida !== undefined) {
-            query += ' WHERE concluida = $1';
             params.push(concluida === 'true');
+            query += ` AND concluida = $${params.length}`;
         }
 
-        query += 'ORDER BY id';
+        if (prioridade !== undefined) {
+            params.push(prioridade);
+            query += ` AND prioridade = $${params.length}`;
+        }
+
+        query += ' ORDER BY id';
         const resultado = await pool.query(query, params);
         res.json(resultado.rows);
     } catch (error) {
@@ -84,7 +89,7 @@ app.delete('/tarefas/:id', async (req, res) => {
         if (resultado.rows.length === 0) {
             return res.status(404).json({ erro: 'Tarefa nao encontrada' });
         }
- res.status(204).send();
+        res.status(204).send();
     } catch (error) {
         console.error(error);
         res.status(500).json({ erro: 'Erro ao deletar tarefa' });
@@ -92,4 +97,4 @@ app.delete('/tarefas/:id', async (req, res) => {
 });
 
 
-app.listen(3000, () => console.log('API de tarefas rodando em http://localhost:${PORT}'));
+app.listen(3000, () => console.log('API de tarefas rodando em porta 3000'));
